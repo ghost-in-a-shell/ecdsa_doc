@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+
+<html class="writer-html5" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="../../img/favicon.ico" rel="shortcut icon"/>
+<title>ecdsa_sign_restartable - MbedTLS ECDSA签名验签函数解析</title>
+<link href="../../css/theme.css" rel="stylesheet"/>
+<link href="../../css/theme_extra.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" rel="stylesheet"/>
+<script>
+        // Current page data
+        var mkdocs_page_name = "ecdsa_sign_restartable";
+        var mkdocs_page_input_path = "sign\\signrestartable.md";
+        var mkdocs_page_url = null;
+      </script>
+<!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+</head>
+<body class="wy-body-for-nav" role="document">
+<div class="wy-grid-for-nav">
+<nav class="wy-nav-side stickynav" data-toggle="wy-nav-shift">
+<div class="wy-side-scroll">
+<div class="wy-side-nav-search">
+<a class="icon icon-home" href="../.."> MbedTLS ECDSA签名验签函数解析
+        </a><div role="search">
+<form action="../../search.html" class="wy-form" id="rtd-search-form" method="get">
+<input aria-label="Search docs" name="q" placeholder="Search docs" title="Type search term here" type="text"/>
+</form>
+</div>
+</div>
+<div aria-label="Navigation menu" class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../..">主页</a>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">签名函数解析</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../ecdsasign/">mbedtls_ecdsa_sign</a>
+</li>
+<li class="toctree-l1 current"><a class="reference internal current" href="./">ecdsa_sign_restartable</a>
+<ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="#_1">函数输入</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#_2">函数输出</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#_3">函数流程</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#_4">函数代码</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#_5">函数说明</a>
+</li>
+</ul>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">验签函数解析</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../verify/fun3/">mbedtls_ecdsa_verify</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../verify/fun4/">ecdsa_verify_restartable</a>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">工具函数解析</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tools/ECDSA_VALIDATE_RET/">ECDSA_VALIDATE_RET</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tools/mbedtls_ecp_gen_privkey/">mbedtls_ecp_gen_privkey</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tools/mbedtls_mpi_fill_random/">mbedtls_mpi_fill_random</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tools/mbedtls_ecp_mul_restartable/">mbedtls_ecp_mul_restartable</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tools/ecp_mul_comb_core/">ecp_mul_comb_core</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tools/ecp_safe_invert_jac/">ecp_safe_invert_jac</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tools/muladd/">mbedtls_ecp_muladd_restartable</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tools/mpi/">大整数计算函数</a>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">总结</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../concl/">总结</a>
+</li>
+</ul>
+</div>
+</div>
+</nav>
+<section class="wy-nav-content-wrap" data-toggle="wy-nav-shift">
+<nav aria-label="Mobile navigation menu" class="wy-nav-top" role="navigation">
+<i class="fa fa-bars" data-toggle="wy-nav-top"></i>
+<a href="../..">MbedTLS ECDSA签名验签函数解析</a>
+</nav>
+<div class="wy-nav-content">
+<div class="rst-content"><div aria-label="breadcrumbs navigation" role="navigation">
+<ul class="wy-breadcrumbs">
+<li><a aria-label="Docs" class="icon icon-home" href="../.."></a> »</li>
+<li>签名函数解析 »</li>
+<li class="breadcrumb-item active">ecdsa_sign_restartable</li>
+<li class="wy-breadcrumbs-aside">
+</li>
+</ul>
+<hr/>
+</div>
+<div class="document" itemscope="itemscope" itemtype="http://schema.org/Article" role="main">
+<div class="section" itemprop="articleBody">
+<h1 id="restartableecdsa_sign_restartableecdsac-253">restartable入口函数：ecdsa_sign_restartable（ecdsa.c 253）</h1>
+<h2 id="_1">函数输入</h2>
+<p>grp：椭圆曲线群指针</p>
+<p>r、s：用于存储签名结果</p>
+<p>d：ECDSA私钥</p>
+<p>buf：此处输入为消息msg的哈希值</p>
+<p>blen：哈希值长度</p>
+<p>f_rng： 随机数生成函数</p>
+<p>p_rng：伪随机数生成器上下文</p>
+<p>restartable: 可以控制是否开启restartable模式，如果为NULL则关闭，如果提供对应的上下文可以开启，支持中断和继续执行。</p>
+<h2 id="_2">函数输出</h2>
+<p>函数返回一个状态值，表示成功或失败</p>
+<p>同时生成签名r和s</p>
+<h2 id="_3">函数流程</h2>
+<p><strong><em>点击流程图跳转对应函数</em></strong></p>
+<div class="mermaid">graph TB
+    Z[ecdsa_sign_restartable函数]
+    A[输入] --&gt;B(定义变量,检查合法性,初始化结构体)
+    B --&gt; C(mbedtls_ecp_gen_privkey生成随机数k)
+    subgraph 循环 直到生成的签名非零 最多尝试10次
+        subgraph 循环 直到生成的r非零 最多尝试10次
+        C --&gt; D(mbedtls_ecp_mul_restartable)
+        D --&gt; E(mbedtls_mpi_mod_mpi对r的横坐标取模)
+        end
+        E --&gt; G(restartable模式存储锚点) 
+        G --&gt; H(mbedtls_ecp_gen_privkey生成随机数t)
+        H --&gt; I(mbedtls_mpi_mul_mpi计算d*r)
+        I --&gt; J(mbedtls_mpi_add_mpi计算a=e+d*r)
+        J --&gt; K(mbedtls_mpi_mul_mpi计算t*a)
+        K --&gt; P(mbedtls_mpi_mul_mpi计算k*t)
+        P --&gt; L(mbedtls_mpi_inv_mod计算模N的逆)
+        L --&gt; M(mbedtls_mpi_mul_mpi计算未取模的签名s)
+        M --&gt; N(mbedtls_mpi_mod_mpi对N取模)
+    end
+    N --&gt; O(输出)
+click C "../../tools/mbedtls_ecp_gen_privkey"
+click E "../../tools/mpi"
+click H "../../tools/mbedtls_ecp_gen_privkey"
+click I "../../tools/mpi"
+click J "../../tools/mpi"
+click K "../../tools/mpi"
+click P "../../tools/mpi"
+click L "../../tools/mpi"
+click M "../../tools/mpi"
+click N "../../tools/mpi"
+click F "../../tools/ECDSA_VALIDATE_RET"
+click D "../../tools/mbedtls_ecp_mul_restartable"
+</div>
+<h2 id="_4">函数代码</h2>
+<div class="highlight"><pre><span></span><code><span class="k">static</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">ecdsa_sign_restartable</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_ecp_group</span><span class="w"> </span><span class="o">*</span><span class="n">grp</span><span class="p">,</span>
+<span class="w">                </span><span class="n">mbedtls_mpi</span><span class="w"> </span><span class="o">*</span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">mbedtls_mpi</span><span class="w"> </span><span class="o">*</span><span class="n">s</span><span class="p">,</span>
+<span class="w">                </span><span class="k">const</span><span class="w"> </span><span class="n">mbedtls_mpi</span><span class="w"> </span><span class="o">*</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">blen</span><span class="p">,</span>
+<span class="w">                </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">f_rng</span><span class="p">)(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="p">),</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">p_rng</span><span class="p">,</span>
+<span class="w">                </span><span class="n">mbedtls_ecdsa_restart_ctx</span><span class="w"> </span><span class="o">*</span><span class="n">rs_ctx</span><span class="w"> </span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">ret</span><span class="p">,</span><span class="w"> </span><span class="n">key_tries</span><span class="p">,</span><span class="w"> </span><span class="n">sign_tries</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="o">*</span><span class="n">p_sign_tries</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">sign_tries</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="n">p_key_tries</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">key_tries</span><span class="p">;</span>
+<span class="w">    </span><span class="n">mbedtls_ecp_point</span><span class="w"> </span><span class="n">R</span><span class="p">;</span>
+<span class="w">    </span><span class="n">mbedtls_mpi</span><span class="w"> </span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">;</span>
+<span class="w">    </span><span class="n">mbedtls_mpi</span><span class="w"> </span><span class="o">*</span><span class="n">pk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="n">pr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">r</span><span class="p">;</span>
+
+<span class="w">    </span><span class="cm">/* Fail cleanly on curves such as Curve25519 that can't be used for ECDSA */</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">N</span><span class="p">.</span><span class="n">p</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="k">return</span><span class="p">(</span><span class="w"> </span><span class="n">MBEDTLS_ERR_ECP_BAD_INPUT_DATA</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="cm">/* Make sure d is in range 1..n-1 */</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_cmp_int</span><span class="p">(</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">mbedtls_mpi_cmp_mpi</span><span class="p">(</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">N</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="k">return</span><span class="p">(</span><span class="w"> </span><span class="n">MBEDTLS_ERR_ECP_INVALID_KEY</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">mbedtls_ecp_point_init</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">R</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">mbedtls_mpi_init</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">k</span><span class="w"> </span><span class="p">);</span><span class="w"> </span><span class="n">mbedtls_mpi_init</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">e</span><span class="w"> </span><span class="p">);</span><span class="w"> </span><span class="n">mbedtls_mpi_init</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">t</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">ECDSA_RS_ENTER</span><span class="p">(</span><span class="w"> </span><span class="n">sig</span><span class="w"> </span><span class="p">);</span>
+
+<span class="cp">#if defined(MBEDTLS_ECP_RESTARTABLE)</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">rs_ctx</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">sig</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="cm">/* redirect to our context */</span>
+<span class="w">        </span><span class="n">p_sign_tries</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">sig</span><span class="o">-&gt;</span><span class="n">sign_tries</span><span class="p">;</span>
+<span class="w">        </span><span class="n">p_key_tries</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">sig</span><span class="o">-&gt;</span><span class="n">key_tries</span><span class="p">;</span>
+<span class="w">        </span><span class="n">pk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">sig</span><span class="o">-&gt;</span><span class="n">k</span><span class="p">;</span>
+<span class="w">        </span><span class="n">pr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">sig</span><span class="o">-&gt;</span><span class="n">r</span><span class="p">;</span>
+
+<span class="w">        </span><span class="cm">/* jump to current step */</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">sig</span><span class="o">-&gt;</span><span class="n">state</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">ecdsa_sig_mul</span><span class="w"> </span><span class="p">)</span>
+<span class="w">            </span><span class="k">goto</span><span class="w"> </span><span class="n">mul</span><span class="p">;</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">sig</span><span class="o">-&gt;</span><span class="n">state</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">ecdsa_sig_modn</span><span class="w"> </span><span class="p">)</span>
+<span class="w">            </span><span class="k">goto</span><span class="w"> </span><span class="n">modn</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="cp">#endif </span><span class="cm">/* MBEDTLS_ECP_RESTARTABLE */</span>
+
+<span class="w">    </span><span class="o">*</span><span class="n">p_sign_tries</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="k">do</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="o">*</span><span class="n">p_sign_tries</span><span class="o">++</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="n">ret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MBEDTLS_ERR_ECP_RANDOM_FAILED</span><span class="p">;</span>
+<span class="w">            </span><span class="k">goto</span><span class="w"> </span><span class="n">cleanup</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="cm">/*</span>
+<span class="cm">         * Steps 1-3: generate a suitable ephemeral keypair</span>
+<span class="cm">         * and set r = xR mod n</span>
+<span class="cm">         */</span>
+<span class="w">        </span><span class="o">*</span><span class="n">p_key_tries</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">        </span><span class="k">do</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="o">*</span><span class="n">p_key_tries</span><span class="o">++</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="p">)</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">                </span><span class="n">ret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MBEDTLS_ERR_ECP_RANDOM_FAILED</span><span class="p">;</span>
+<span class="w">                </span><span class="k">goto</span><span class="w"> </span><span class="n">cleanup</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+
+<span class="w">            </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_ecp_gen_privkey</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">pk</span><span class="p">,</span><span class="w"> </span><span class="n">f_rng</span><span class="p">,</span><span class="w"> </span><span class="n">p_rng</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="cp">#if defined(MBEDTLS_ECP_RESTARTABLE)</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">rs_ctx</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">sig</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">)</span>
+<span class="w">                </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">sig</span><span class="o">-&gt;</span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ecdsa_sig_mul</span><span class="p">;</span>
+
+<span class="nl">mul</span><span class="p">:</span>
+<span class="cp">#endif</span>
+<span class="w">            </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_ecp_mul_restartable</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">R</span><span class="p">,</span><span class="w"> </span><span class="n">pk</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">G</span><span class="p">,</span>
+<span class="w">                                                  </span><span class="n">f_rng</span><span class="p">,</span><span class="w"> </span><span class="n">p_rng</span><span class="p">,</span><span class="w"> </span><span class="n">ECDSA_RS_ECP</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">            </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_mod_mpi</span><span class="p">(</span><span class="w"> </span><span class="n">pr</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">R</span><span class="p">.</span><span class="n">X</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">N</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">while</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_cmp_int</span><span class="p">(</span><span class="w"> </span><span class="n">pr</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">);</span>
+
+<span class="cp">#if defined(MBEDTLS_ECP_RESTARTABLE)</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">rs_ctx</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">sig</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">)</span>
+<span class="w">            </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">sig</span><span class="o">-&gt;</span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ecdsa_sig_modn</span><span class="p">;</span>
+
+<span class="nl">modn</span><span class="p">:</span>
+<span class="cp">#endif</span>
+<span class="w">        </span><span class="cm">/*</span>
+<span class="cm">         * Accounting for everything up to the end of the loop</span>
+<span class="cm">         * (step 6, but checking now avoids saving e and t)</span>
+<span class="cm">         */</span>
+<span class="w">        </span><span class="n">ECDSA_BUDGET</span><span class="p">(</span><span class="w"> </span><span class="n">MBEDTLS_ECP_OPS_INV</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">        </span><span class="cm">/*</span>
+<span class="cm">         * Step 5: derive MPI from hashed message</span>
+<span class="cm">         */</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">derive_mpi</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="n">blen</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">        </span><span class="cm">/*</span>
+<span class="cm">         * Generate a random value to blind inv_mod in next step,</span>
+<span class="cm">         * avoiding a potential timing leak.</span>
+<span class="cm">         */</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_ecp_gen_privkey</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="n">f_rng</span><span class="p">,</span><span class="w"> </span><span class="n">p_rng</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">        </span><span class="cm">/*</span>
+<span class="cm">         * Step 6: compute s = (e + r * d) / k = t (e + rd) / (kt) mod n</span>
+<span class="cm">         */</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_mul_mpi</span><span class="p">(</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="n">pr</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_add_mpi</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_mul_mpi</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">t</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_mul_mpi</span><span class="p">(</span><span class="w"> </span><span class="n">pk</span><span class="p">,</span><span class="w"> </span><span class="n">pk</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">t</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_inv_mod</span><span class="p">(</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="n">pk</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">N</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_mul_mpi</span><span class="p">(</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">e</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_mod_mpi</span><span class="p">(</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">N</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">while</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_cmp_int</span><span class="p">(</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">);</span>
+
+<span class="cp">#if defined(MBEDTLS_ECP_RESTARTABLE)</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">rs_ctx</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">sig</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="n">mbedtls_mpi_copy</span><span class="p">(</span><span class="w"> </span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">pr</span><span class="w"> </span><span class="p">);</span>
+<span class="cp">#endif</span>
+
+<span class="nl">cleanup</span><span class="p">:</span>
+<span class="w">    </span><span class="n">mbedtls_ecp_point_free</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">R</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">mbedtls_mpi_free</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">k</span><span class="w"> </span><span class="p">);</span><span class="w"> </span><span class="n">mbedtls_mpi_free</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">e</span><span class="w"> </span><span class="p">);</span><span class="w"> </span><span class="n">mbedtls_mpi_free</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">t</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">ECDSA_RS_LEAVE</span><span class="p">(</span><span class="w"> </span><span class="n">sig</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">return</span><span class="p">(</span><span class="w"> </span><span class="n">ret</span><span class="w"> </span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="_5">函数说明</h2>
+<p>进行ECDSA签名</p>
+<p><strong>对照ECDSA签名流程：</strong></p>
+<p><strong>第一步</strong>，生成随机的k</p>
+<p><strong>第二步</strong>，计算R=k*G，G为基点。令r=R.x，为R的横坐标</p>
+<p><strong>第三步</strong>，计算z=H(msg)</p>
+<p><strong>第四步</strong>，计算s=(z+r*d)/k (modN)</p>
+<p>最后得到<strong>签名（r,s）</strong></p>
+<p><strong>代码分析：顺序分析函数功能</strong></p>
+<p>1.定义变量，其中R、k、r与上面流程中的对应变量相对应</p>
+<p>sign_tries等变量定义了尝试次数上限</p>
+<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">ret</span><span class="p">,</span><span class="w"> </span><span class="n">key_tries</span><span class="p">,</span><span class="w"> </span><span class="n">sign_tries</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="o">*</span><span class="n">p_sign_tries</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">sign_tries</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="n">p_key_tries</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">key_tries</span><span class="p">;</span>
+<span class="w">    </span><span class="n">mbedtls_ecp_point</span><span class="w"> </span><span class="n">R</span><span class="p">;</span>
+<span class="w">    </span><span class="n">mbedtls_mpi</span><span class="w"> </span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="n">t</span><span class="p">;</span>
+<span class="w">    </span><span class="n">mbedtls_mpi</span><span class="w"> </span><span class="o">*</span><span class="n">pk</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="n">pr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">r</span><span class="p">;</span>
+</code></pre></div>
+<p>2.检查变量是否合法，检查了椭圆曲线是否可以用于ECDSA，私钥d是否在1到n-1的合法范围内</p>
+<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="cm">/* Fail cleanly on curves such as Curve25519 that can't be used for ECDSA */</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">N</span><span class="p">.</span><span class="n">p</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="k">return</span><span class="p">(</span><span class="w"> </span><span class="n">MBEDTLS_ERR_ECP_BAD_INPUT_DATA</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="cm">/* Make sure d is in range 1..n-1 */</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_cmp_int</span><span class="p">(</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">mbedtls_mpi_cmp_mpi</span><span class="p">(</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">N</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="k">return</span><span class="p">(</span><span class="w"> </span><span class="n">MBEDTLS_ERR_ECP_INVALID_KEY</span><span class="w"> </span><span class="p">);</span>
+</code></pre></div>
+<p>3.初始化结构体</p>
+<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="n">mbedtls_ecp_point_init</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">R</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">mbedtls_mpi_init</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">k</span><span class="w"> </span><span class="p">);</span><span class="w"> </span><span class="n">mbedtls_mpi_init</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">e</span><span class="w"> </span><span class="p">);</span><span class="w"> </span><span class="n">mbedtls_mpi_init</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">t</span><span class="w"> </span><span class="p">);</span>
+</code></pre></div>
+<p>4.restart模式保存上下文</p>
+<p>如果函数输入了restart上下文，复原状态，包括尝试次数和已经生成的k和r
+之后根据存储的步骤跳转到对应的位置</p>
+<p>5.<strong>主体代码-外层循环：</strong>尝试生成签名，如果签名为0则重新生成，最多有10次机会，超过则报错返回</p>
+<p>注：mbedtls_mpi_cmp_int函数大于时返回1，小于返回-1，相等返回0</p>
+<div class="highlight"><pre><span></span><code><span class="w">    </span><span class="o">*</span><span class="n">p_sign_tries</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="k">do</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="o">*</span><span class="n">p_sign_tries</span><span class="o">++</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="n">ret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MBEDTLS_ERR_ECP_RANDOM_FAILED</span><span class="p">;</span>
+<span class="w">            </span><span class="k">goto</span><span class="w"> </span><span class="n">cleanup</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="p">...</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">while</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_cmp_int</span><span class="p">(</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">);</span>
+</code></pre></div>
+<p>6.<strong>主体代码-循环体第一部分：</strong>生成k和对应的r</p>
+<p>类似地，尝试最多10次，直到生成的r（代码中的pr）非零</p>
+<p>其中MBEDTLS_MPI_CHK（f）函数检查括号内函数f的返回值，如果返回值非零（正常执行时返回0），则报错返回，不影响f函数的执行</p>
+<p>循环内首先调用了mbedtls_ecp_gen_privkey函数，这个函数用来生成指定长度的随机数，既可以生成ECDSA的私钥，也可以在这里用于签名的随机数k（代码中的pk），使用随机数生成函数和伪随机数生成上下文生成随机数。</p>
+<p>生成了随机的k，这里如果开启了restart模式，则进行状态存储rs_ctx-&gt;sig-&gt;state = ecdsa_sig_mul，同时断点继续执行时也从这一句下面的mul：后开始执行</p>
+<p>之后调用mbedtls_ecp_mul_restartable函数计算R=k*G</p>
+<p>最后调用mbedtls_mpi_mod_mpi函数将R的横坐标对N取模</p>
+<div class="highlight"><pre><span></span><code><span class="w">        </span><span class="o">*</span><span class="n">p_key_tries</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">        </span><span class="k">do</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="o">*</span><span class="n">p_key_tries</span><span class="o">++</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="p">)</span>
+<span class="w">            </span><span class="p">{</span>
+<span class="w">                </span><span class="n">ret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MBEDTLS_ERR_ECP_RANDOM_FAILED</span><span class="p">;</span>
+<span class="w">                </span><span class="k">goto</span><span class="w"> </span><span class="n">cleanup</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+
+<span class="w">            </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_ecp_gen_privkey</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">pk</span><span class="p">,</span><span class="w"> </span><span class="n">f_rng</span><span class="p">,</span><span class="w"> </span><span class="n">p_rng</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="cp">#if defined(MBEDTLS_ECP_RESTARTABLE)</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">rs_ctx</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">sig</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">)</span>
+<span class="w">                </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">sig</span><span class="o">-&gt;</span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ecdsa_sig_mul</span><span class="p">;</span>
+
+<span class="nl">mul</span><span class="p">:</span>
+<span class="cp">#endif</span>
+<span class="w">            </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_ecp_mul_restartable</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">R</span><span class="p">,</span><span class="w"> </span><span class="n">pk</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">G</span><span class="p">,</span>
+<span class="w">                                                  </span><span class="n">f_rng</span><span class="p">,</span><span class="w"> </span><span class="n">p_rng</span><span class="p">,</span><span class="w"> </span><span class="n">ECDSA_RS_ECP</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">            </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_mod_mpi</span><span class="p">(</span><span class="w"> </span><span class="n">pr</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">R</span><span class="p">.</span><span class="n">X</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">N</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="k">while</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_cmp_int</span><span class="p">(</span><span class="w"> </span><span class="n">pr</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">);</span>
+</code></pre></div>
+<p>7.<strong>主体代码-循环体第二部分：</strong>这里如果开启了restart模式，则进行状态存储rs_ctx-&gt;sig-&gt;state = ecdsa_sig_modn，同时断点继续执行时也从这一句下面的modn：后开始执行</p>
+<div class="highlight"><pre><span></span><code><span class="cp">#if defined(MBEDTLS_ECP_RESTARTABLE)</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">rs_ctx</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">sig</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">)</span>
+<span class="w">            </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">sig</span><span class="o">-&gt;</span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ecdsa_sig_modn</span><span class="p">;</span>
+
+<span class="nl">modn</span><span class="p">:</span>
+</code></pre></div>
+<p>8.<strong>主体代码-循环体第三部分</strong>：计算另一部分签名s</p>
+<p>ECDSA_BUDGET为一个空的宏，没有作用</p>
+<div class="highlight"><pre><span></span><code><span class="cp">#define ECDSA_BUDGET( ops )   </span><span class="cm">/* no-op; for compatibility */</span>
+</code></pre></div>
+<p>之后的derive_mpi从预先生成的哈希buf生成一个大整数</p>
+<p>mbedtls_ecp_gen_privkey与之前相同，生成一个随机的t</p>
+<p>t的作用：为了避免使用相同的随机数而导致私钥泄露，需要使用一个称为“签名盲化因子”（blinding factor）的随机数来盲化签名过程。在上述代码中，t 就是一个签名盲化因子，它是通过调用 mbedtls_ecp_gen_privkey 函数生成的一个随机数。生成随机数的过程是为了防止使用相同的随机数进行签名而导致私钥泄露，因为此时攻击者可能会通过多次观察签名结果来计算出私钥。</p>
+<p>之后的一连串计算为计算t (e + rd) / (kt) mod n 的过程</p>
+<div class="highlight"><pre><span></span><code><span class="w">        </span><span class="n">ECDSA_BUDGET</span><span class="p">(</span><span class="w"> </span><span class="n">MBEDTLS_ECP_OPS_INV</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">        </span><span class="cm">/*</span>
+<span class="cm">         * Step 5: derive MPI from hashed message</span>
+<span class="cm">         */</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">derive_mpi</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="n">blen</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">        </span><span class="cm">/*</span>
+<span class="cm">         * Generate a random value to blind inv_mod in next step,</span>
+<span class="cm">         * avoiding a potential timing leak.</span>
+<span class="cm">         */</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_ecp_gen_privkey</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">t</span><span class="p">,</span><span class="w"> </span><span class="n">f_rng</span><span class="p">,</span><span class="w"> </span><span class="n">p_rng</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">        </span><span class="cm">/*</span>
+<span class="cm">         * Step 6: compute s = (e + r * d) / k = t (e + rd) / (kt) mod n</span>
+<span class="cm">         */</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_mul_mpi</span><span class="p">(</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="n">pr</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_add_mpi</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_mul_mpi</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">e</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">t</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_mul_mpi</span><span class="p">(</span><span class="w"> </span><span class="n">pk</span><span class="p">,</span><span class="w"> </span><span class="n">pk</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">t</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_inv_mod</span><span class="p">(</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="n">pk</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">N</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_mul_mpi</span><span class="p">(</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">e</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_mod_mpi</span><span class="p">(</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">N</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+</code></pre></div>
+<p>9.函数结尾部分，存储状态、释放空间</p>
+<div class="highlight"><pre><span></span><code><span class="cp">#if defined(MBEDTLS_ECP_RESTARTABLE)</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">rs_ctx</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">sig</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="n">mbedtls_mpi_copy</span><span class="p">(</span><span class="w"> </span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">pr</span><span class="w"> </span><span class="p">);</span>
+<span class="cp">#endif</span>
+
+<span class="nl">cleanup</span><span class="p">:</span>
+<span class="w">    </span><span class="n">mbedtls_ecp_point_free</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">R</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">mbedtls_mpi_free</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">k</span><span class="w"> </span><span class="p">);</span><span class="w"> </span><span class="n">mbedtls_mpi_free</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">e</span><span class="w"> </span><span class="p">);</span><span class="w"> </span><span class="n">mbedtls_mpi_free</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">t</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">ECDSA_RS_LEAVE</span><span class="p">(</span><span class="w"> </span><span class="n">sig</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">return</span><span class="p">(</span><span class="w"> </span><span class="n">ret</span><span class="w"> </span><span class="p">);</span>
+</code></pre></div>
+</div>
+</div><footer>
+<div aria-label="Footer Navigation" class="rst-footer-buttons" role="navigation">
+<a class="btn btn-neutral float-left" href="../ecdsasign/" title="mbedtls_ecdsa_sign"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+<a class="btn btn-neutral float-right" href="../../verify/fun3/" title="mbedtls_ecdsa_verify">Next <span class="icon icon-circle-arrow-right"></span></a>
+</div>
+<hr/>
+<div role="contentinfo">
+<!-- Copyright etc -->
+</div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+</div>
+</div>
+</section>
+</div>
+<div aria-label="Versions" class="rst-versions" role="note">
+<span class="rst-current-version" data-toggle="rst-current-version">
+<span><a href="../ecdsasign/" style="color: #fcfcfc">« Previous</a></span>
+<span><a href="../../verify/fun3/" style="color: #fcfcfc">Next »</a></span>
+</span>
+</div>
+<script src="../../js/jquery-3.6.0.min.js"></script>
+<script>var base_url = "../..";</script>
+<script src="../../js/theme_extra.js"></script>
+<script src="../../js/theme.js"></script>
+<script src="../../search/main.js"></script>
+<script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+<script type="module">import mermaid from "https://unpkg.com/mermaid@10.4.0/dist/mermaid.esm.min.mjs";
+mermaid.initialize({
+    securityLevel: "loose"
+});</script></body>
+</html>

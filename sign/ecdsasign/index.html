@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+
+<html class="writer-html5" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="../../img/favicon.ico" rel="shortcut icon"/>
+<title>mbedtls_ecdsa_sign - MbedTLS ECDSA签名验签函数解析</title>
+<link href="../../css/theme.css" rel="stylesheet"/>
+<link href="../../css/theme_extra.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" rel="stylesheet"/>
+<script>
+        // Current page data
+        var mkdocs_page_name = "mbedtls_ecdsa_sign";
+        var mkdocs_page_input_path = "sign\\ecdsasign.md";
+        var mkdocs_page_url = null;
+      </script>
+<!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+</head>
+<body class="wy-body-for-nav" role="document">
+<div class="wy-grid-for-nav">
+<nav class="wy-nav-side stickynav" data-toggle="wy-nav-shift">
+<div class="wy-side-scroll">
+<div class="wy-side-nav-search">
+<a class="icon icon-home" href="../.."> MbedTLS ECDSA签名验签函数解析
+        </a><div role="search">
+<form action="../../search.html" class="wy-form" id="rtd-search-form" method="get">
+<input aria-label="Search docs" name="q" placeholder="Search docs" title="Type search term here" type="text"/>
+</form>
+</div>
+</div>
+<div aria-label="Navigation menu" class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../..">主页</a>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">签名函数解析</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal current" href="./">mbedtls_ecdsa_sign</a>
+<ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="#_1">函数输入</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#_2">函数输出</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#_3">函数流程</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#_4">函数代码</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#_5">函数说明</a>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../signrestartable/">ecdsa_sign_restartable</a>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">验签函数解析</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../verify/fun3/">mbedtls_ecdsa_verify</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../verify/fun4/">ecdsa_verify_restartable</a>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">工具函数解析</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../tools/ECDSA_VALIDATE_RET/">ECDSA_VALIDATE_RET</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tools/mbedtls_ecp_gen_privkey/">mbedtls_ecp_gen_privkey</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tools/mbedtls_mpi_fill_random/">mbedtls_mpi_fill_random</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tools/mbedtls_ecp_mul_restartable/">mbedtls_ecp_mul_restartable</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tools/ecp_mul_comb_core/">ecp_mul_comb_core</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tools/ecp_safe_invert_jac/">ecp_safe_invert_jac</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tools/muladd/">mbedtls_ecp_muladd_restartable</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../tools/mpi/">大整数计算函数</a>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">总结</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../concl/">总结</a>
+</li>
+</ul>
+</div>
+</div>
+</nav>
+<section class="wy-nav-content-wrap" data-toggle="wy-nav-shift">
+<nav aria-label="Mobile navigation menu" class="wy-nav-top" role="navigation">
+<i class="fa fa-bars" data-toggle="wy-nav-top"></i>
+<a href="../..">MbedTLS ECDSA签名验签函数解析</a>
+</nav>
+<div class="wy-nav-content">
+<div class="rst-content"><div aria-label="breadcrumbs navigation" role="navigation">
+<ul class="wy-breadcrumbs">
+<li><a aria-label="Docs" class="icon icon-home" href="../.."></a> »</li>
+<li>签名函数解析 »</li>
+<li class="breadcrumb-item active">mbedtls_ecdsa_sign</li>
+<li class="wy-breadcrumbs-aside">
+</li>
+</ul>
+<hr/>
+</div>
+<div class="document" itemscope="itemscope" itemtype="http://schema.org/Article" role="main">
+<div class="section" itemprop="articleBody">
+<h1 id="mbedtls_ecdsa_signecdsac-384">入口函数：mbedtls_ecdsa_sign（ecdsa.c 384）</h1>
+<h2 id="_1">函数输入</h2>
+<p>grp：椭圆曲线群指针</p>
+<p>r、s：用于存储签名结果</p>
+<p>d：ECDSA私钥</p>
+<p>buf：此处输入为消息msg的哈希值</p>
+<p>blen：哈希值长度</p>
+<p>f_rng： 随机数生成函数</p>
+<p>p_rng：伪随机数生成器上下文</p>
+<h2 id="_2">函数输出</h2>
+<p>函数返回一个状态值，表示成功或失败</p>
+<p>同时生成签名r和s</p>
+<h2 id="_3">函数流程</h2>
+<p><strong><em>点击流程图跳转对应函数</em></strong></p>
+<div class="mermaid">graph TB
+    F[mbedtls_ecdsa_sign函数]
+    A[输入] --&gt;B(ECDSA_VALIDATE_RET)
+    B -.-&gt; C(ECDSA_VALIDATE_RET)
+    C --&gt; D(ecdsa_sign_restartable)
+    D --&gt; E[输出]
+click B "../../tools/ECDSA_VALIDATE_RET"
+click C "../../tools/ECDSA_VALIDATE_RET"
+click F "../../tools/ECDSA_VALIDATE_RET"
+click D "../signrestartable"
+</div>
+<h2 id="_4">函数代码</h2>
+<div class="highlight"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">mbedtls_ecdsa_sign</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_ecp_group</span><span class="w"> </span><span class="o">*</span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">mbedtls_mpi</span><span class="w"> </span><span class="o">*</span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">mbedtls_mpi</span><span class="w"> </span><span class="o">*</span><span class="n">s</span><span class="p">,</span>
+<span class="w">                </span><span class="k">const</span><span class="w"> </span><span class="n">mbedtls_mpi</span><span class="w"> </span><span class="o">*</span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="w"> </span><span class="n">blen</span><span class="p">,</span>
+<span class="w">                </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">f_rng</span><span class="p">)(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="p">),</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">p_rng</span><span class="w"> </span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">ECDSA_VALIDATE_RET</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="w">   </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">ECDSA_VALIDATE_RET</span><span class="p">(</span><span class="w"> </span><span class="n">r</span><span class="w">     </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">ECDSA_VALIDATE_RET</span><span class="p">(</span><span class="w"> </span><span class="n">s</span><span class="w">     </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">ECDSA_VALIDATE_RET</span><span class="p">(</span><span class="w"> </span><span class="n">d</span><span class="w">     </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">ECDSA_VALIDATE_RET</span><span class="p">(</span><span class="w"> </span><span class="n">f_rng</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">ECDSA_VALIDATE_RET</span><span class="p">(</span><span class="w"> </span><span class="n">buf</span><span class="w">   </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">blen</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">return</span><span class="p">(</span><span class="w"> </span><span class="n">ecdsa_sign_restartable</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">r</span><span class="p">,</span><span class="w"> </span><span class="n">s</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="n">blen</span><span class="p">,</span>
+<span class="w">                                    </span><span class="n">f_rng</span><span class="p">,</span><span class="w"> </span><span class="n">p_rng</span><span class="p">,</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="_5">函数说明</h2>
+<p>1.首先使用ECDSA_VALIDATE_RET函数检查各个参数是否合法，然而这里的ECDSA_VALIDATE_RET函数实则调用</p>
+<div class="highlight"><pre><span></span><code>#define MBEDTLS_INTERNAL_VALIDATE_RET( cond, ret )  do { } while( 0 )
+</code></pre></div>
+<p>并没有任何功能。</p>
+<p>2.将参数传递给ecdsa_sign_restartable函数进一步执行。这个函数相当于默认不开启restartable模式的签名函数。</p>
+</div>
+</div><footer>
+<div aria-label="Footer Navigation" class="rst-footer-buttons" role="navigation">
+<a class="btn btn-neutral float-left" href="../.." title="主页"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+<a class="btn btn-neutral float-right" href="../signrestartable/" title="ecdsa_sign_restartable">Next <span class="icon icon-circle-arrow-right"></span></a>
+</div>
+<hr/>
+<div role="contentinfo">
+<!-- Copyright etc -->
+</div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+</div>
+</div>
+</section>
+</div>
+<div aria-label="Versions" class="rst-versions" role="note">
+<span class="rst-current-version" data-toggle="rst-current-version">
+<span><a href="../.." style="color: #fcfcfc">« Previous</a></span>
+<span><a href="../signrestartable/" style="color: #fcfcfc">Next »</a></span>
+</span>
+</div>
+<script src="../../js/jquery-3.6.0.min.js"></script>
+<script>var base_url = "../..";</script>
+<script src="../../js/theme_extra.js"></script>
+<script src="../../js/theme.js"></script>
+<script src="../../search/main.js"></script>
+<script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+<script type="module">import mermaid from "https://unpkg.com/mermaid@10.4.0/dist/mermaid.esm.min.mjs";
+mermaid.initialize({
+    securityLevel: "loose"
+});</script></body>
+</html>

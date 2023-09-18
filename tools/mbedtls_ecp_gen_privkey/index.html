@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+
+<html class="writer-html5" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="../../img/favicon.ico" rel="shortcut icon"/>
+<title>mbedtls_ecp_gen_privkey - MbedTLS ECDSA签名验签函数解析</title>
+<link href="../../css/theme.css" rel="stylesheet"/>
+<link href="../../css/theme_extra.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" rel="stylesheet"/>
+<script>
+        // Current page data
+        var mkdocs_page_name = "mbedtls_ecp_gen_privkey";
+        var mkdocs_page_input_path = "tools\\mbedtls_ecp_gen_privkey.md";
+        var mkdocs_page_url = null;
+      </script>
+<!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+</head>
+<body class="wy-body-for-nav" role="document">
+<div class="wy-grid-for-nav">
+<nav class="wy-nav-side stickynav" data-toggle="wy-nav-shift">
+<div class="wy-side-scroll">
+<div class="wy-side-nav-search">
+<a class="icon icon-home" href="../.."> MbedTLS ECDSA签名验签函数解析
+        </a><div role="search">
+<form action="../../search.html" class="wy-form" id="rtd-search-form" method="get">
+<input aria-label="Search docs" name="q" placeholder="Search docs" title="Type search term here" type="text"/>
+</form>
+</div>
+</div>
+<div aria-label="Navigation menu" class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../..">主页</a>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">签名函数解析</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../sign/ecdsasign/">mbedtls_ecdsa_sign</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../sign/signrestartable/">ecdsa_sign_restartable</a>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">验签函数解析</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../verify/fun3/">mbedtls_ecdsa_verify</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../verify/fun4/">ecdsa_verify_restartable</a>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">工具函数解析</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../ECDSA_VALIDATE_RET/">ECDSA_VALIDATE_RET</a>
+</li>
+<li class="toctree-l1 current"><a class="reference internal current" href="./">mbedtls_ecp_gen_privkey</a>
+<ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="#_1">函数流程</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#_2">函数代码</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#_3">函数说明</a>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../mbedtls_mpi_fill_random/">mbedtls_mpi_fill_random</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../mbedtls_ecp_mul_restartable/">mbedtls_ecp_mul_restartable</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ecp_mul_comb_core/">ecp_mul_comb_core</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ecp_safe_invert_jac/">ecp_safe_invert_jac</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../muladd/">mbedtls_ecp_muladd_restartable</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../mpi/">大整数计算函数</a>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">总结</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../concl/">总结</a>
+</li>
+</ul>
+</div>
+</div>
+</nav>
+<section class="wy-nav-content-wrap" data-toggle="wy-nav-shift">
+<nav aria-label="Mobile navigation menu" class="wy-nav-top" role="navigation">
+<i class="fa fa-bars" data-toggle="wy-nav-top"></i>
+<a href="../..">MbedTLS ECDSA签名验签函数解析</a>
+</nav>
+<div class="wy-nav-content">
+<div class="rst-content"><div aria-label="breadcrumbs navigation" role="navigation">
+<ul class="wy-breadcrumbs">
+<li><a aria-label="Docs" class="icon icon-home" href="../.."></a> »</li>
+<li>工具函数解析 »</li>
+<li class="breadcrumb-item active">mbedtls_ecp_gen_privkey</li>
+<li class="wy-breadcrumbs-aside">
+</li>
+</ul>
+<hr/>
+</div>
+<div class="document" itemscope="itemscope" itemtype="http://schema.org/Article" role="main">
+<div class="section" itemprop="articleBody">
+<h1 id="mbedtls_ecp_gen_privkeyecpc-2680">mbedtls_ecp_gen_privkey(ecp.c 2680)</h1>
+<h2 id="_1">函数流程</h2>
+<p><strong><em>点击流程图跳转对应函数</em></strong></p>
+<div class="mermaid">graph TB
+    Z[mbedtls_ecp_gen_privkey函数]
+    A[输入] --&gt;B(定义变量,检查合法性)
+    B --&gt; |ECP_MONTGOMERY|C(mbedtls_mpi_fill_random生成随机数)
+    B --&gt; |ECP_SHORTWEIERSTRASS|D(mbedtls_mpi_fill_random生成随机数)
+    C --&gt; E(最低的2到3位清零)
+    D --&gt; G(如果失败重新生成) 
+    G --&gt; H[输出]
+    E --&gt; H
+click C "../../tools/mbedtls_mpi_fill_random"
+click D "../../tools/mbedtls_mpi_fill_random"
+</div>
+<h2 id="_2">函数代码</h2>
+<p>mbedtls_ecp_gen_privkey</p>
+<div class="highlight"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">mbedtls_ecp_gen_privkey</span><span class="p">(</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">mbedtls_ecp_group</span><span class="w"> </span><span class="o">*</span><span class="n">grp</span><span class="p">,</span>
+<span class="w">                     </span><span class="n">mbedtls_mpi</span><span class="w"> </span><span class="o">*</span><span class="n">d</span><span class="p">,</span>
+<span class="w">                     </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">f_rng</span><span class="p">)(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="p">),</span>
+<span class="w">                     </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">p_rng</span><span class="w"> </span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">ret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MBEDTLS_ERR_ECP_BAD_INPUT_DATA</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">n_size</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">ECP_VALIDATE_RET</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="w">   </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">ECP_VALIDATE_RET</span><span class="p">(</span><span class="w"> </span><span class="n">d</span><span class="w">     </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">ECP_VALIDATE_RET</span><span class="p">(</span><span class="w"> </span><span class="n">f_rng</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">n_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">nbits</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">7</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mi">8</span><span class="p">;</span>
+
+<span class="cp">#if defined(ECP_MONTGOMERY)</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">ecp_get_type</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">ECP_TYPE_MONTGOMERY</span><span class="w"> </span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="cm">/* [M225] page 5 */</span>
+<span class="w">        </span><span class="kt">size_t</span><span class="w"> </span><span class="n">b</span><span class="p">;</span>
+
+<span class="w">        </span><span class="k">do</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_fill_random</span><span class="p">(</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">n_size</span><span class="p">,</span><span class="w"> </span><span class="n">f_rng</span><span class="p">,</span><span class="w"> </span><span class="n">p_rng</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">while</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_bitlen</span><span class="p">(</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+
+<span class="w">        </span><span class="cm">/* Make sure the most significant bit is nbits */</span>
+<span class="w">        </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mbedtls_mpi_bitlen</span><span class="p">(</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w"> </span><span class="cm">/* mbedtls_mpi_bitlen is one-based */</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">nbits</span><span class="w"> </span><span class="p">)</span>
+<span class="w">            </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_shift_r</span><span class="p">(</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">nbits</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="k">else</span>
+<span class="w">            </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_set_bit</span><span class="p">(</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">nbits</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">        </span><span class="cm">/* Make sure the last two bits are unset for Curve448, three bits for</span>
+<span class="cm">           Curve25519 */</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_set_bit</span><span class="p">(</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_set_bit</span><span class="p">(</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">nbits</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">254</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_set_bit</span><span class="p">(</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="cp">#endif </span><span class="cm">/* ECP_MONTGOMERY */</span>
+
+<span class="cp">#if defined(ECP_SHORTWEIERSTRASS)</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">ecp_get_type</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">ECP_TYPE_SHORT_WEIERSTRASS</span><span class="w"> </span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="cm">/* SEC1 3.2.1: Generate d such that 1 &lt;= n &lt; N */</span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+
+<span class="w">        </span><span class="cm">/*</span>
+<span class="cm">         * Match the procedure given in RFC 6979 (deterministic ECDSA):</span>
+<span class="cm">         * - use the same byte ordering;</span>
+<span class="cm">         * - keep the leftmost nbits bits of the generated octet string;</span>
+<span class="cm">         * - try until result is in the desired range.</span>
+<span class="cm">         * This also avoids any biais, which is especially important for ECDSA.</span>
+<span class="cm">         */</span>
+<span class="w">        </span><span class="k">do</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_fill_random</span><span class="p">(</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">n_size</span><span class="p">,</span><span class="w"> </span><span class="n">f_rng</span><span class="p">,</span><span class="w"> </span><span class="n">p_rng</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">            </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_shift_r</span><span class="p">(</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="mi">8</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">n_size</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">nbits</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">            </span><span class="cm">/*</span>
+<span class="cm">             * Each try has at worst a probability 1/2 of failing (the msb has</span>
+<span class="cm">             * a probability 1/2 of being 0, and then the result will be &lt; N),</span>
+<span class="cm">             * so after 30 tries failure probability is a most 2**(-30).</span>
+<span class="cm">             *</span>
+<span class="cm">             * For most curves, 1 try is enough with overwhelming probability,</span>
+<span class="cm">             * since N starts with a lot of 1s in binary, but some curves</span>
+<span class="cm">             * such as secp224k1 are actually very close to the worst case.</span>
+<span class="cm">             */</span>
+<span class="w">            </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="o">++</span><span class="n">count</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">30</span><span class="w"> </span><span class="p">)</span>
+<span class="w">                </span><span class="k">return</span><span class="p">(</span><span class="w"> </span><span class="n">MBEDTLS_ERR_ECP_RANDOM_FAILED</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">while</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_cmp_int</span><span class="p">(</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">||</span>
+<span class="w">               </span><span class="n">mbedtls_mpi_cmp_mpi</span><span class="p">(</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">N</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="cp">#endif </span><span class="cm">/* ECP_SHORTWEIERSTRASS */</span>
+
+<span class="nl">cleanup</span><span class="p">:</span>
+<span class="w">    </span><span class="k">return</span><span class="p">(</span><span class="w"> </span><span class="n">ret</span><span class="w"> </span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="_3">函数说明</h2>
+<p>函数根据不同的曲线类型生成不同的满足要求的随机数</p>
+<p>曲线类型包括：</p>
+<p>There are several different ways to express elliptic curves over F_p:</p>
+<ul>
+<li>The <strong>short Weierstrass equation</strong> y^2 = x^3 + ax + b, where 4a^3+27b^2 is nonzero in F_p, is an elliptic curve over F_p. Every elliptic curve over F_p can be converted to a short Weierstrass equation if p is larger than 3.</li>
+<li>The <strong>Montgomery equation</strong> By^2 = x^3 + Ax^2 + x, where B(A^2-4) is nonzero in F_p, is an elliptic curve over F_p. Substituting x = Bu-A/3 and y = Bv produces the short Weierstrass equation v^2 = u^3 + au + b where a = (3-A^2)/(3B^2) and b = (2A^3-9A)/(27B^3). Montgomery curves were introduced by <a href="https://safecurves.cr.yp.to/refs.html#1987/montgomery-speeding">1987 Montgomery</a>.</li>
+<li>The <strong>Edwards equation</strong> x^2 + y^2 = 1 + dx^2y^2, where d(1-d) is nonzero in F_p, is an elliptic curve over F_p. Substituting x = u/v and y = (u-1)/(u+1) produces the Montgomery equation Bv^2 = u^3 + Au^2 + u where A = 2(1+d)/(1-d) and B = 4/(1-d). Edwards curves were introduced by <a href="https://safecurves.cr.yp.to/refs.html#2007/edwards-normal">2007 Edwards</a> in the case that d is a 4th power. SafeCurves requires Edwards curves to be <strong>complete</strong>, i.e., for d to not be a square; complete Edwards curves were introduced by <a href="https://safecurves.cr.yp.to/refs.html#2007/bernstein-newelliptic">2007 Bernstein–Lange</a>.</li>
+</ul>
+<p>其中mbedtls支持的是<strong>Montgomery equation</strong> 和<strong>short Weierstrass equation</strong></p>
+<p>函数的核心为mbedtls_mpi_fill_random函数</p>
+<p>函数先调用mbedtls_mpi_fill_random函数生成随机数，再根据曲线类型调整</p>
+<p>例如如果椭圆曲线类型为 Montgomery，则将最低的2到3位清零</p>
+</div>
+</div><footer>
+<div aria-label="Footer Navigation" class="rst-footer-buttons" role="navigation">
+<a class="btn btn-neutral float-left" href="../ECDSA_VALIDATE_RET/" title="ECDSA_VALIDATE_RET"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+<a class="btn btn-neutral float-right" href="../mbedtls_mpi_fill_random/" title="mbedtls_mpi_fill_random">Next <span class="icon icon-circle-arrow-right"></span></a>
+</div>
+<hr/>
+<div role="contentinfo">
+<!-- Copyright etc -->
+</div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+</div>
+</div>
+</section>
+</div>
+<div aria-label="Versions" class="rst-versions" role="note">
+<span class="rst-current-version" data-toggle="rst-current-version">
+<span><a href="../ECDSA_VALIDATE_RET/" style="color: #fcfcfc">« Previous</a></span>
+<span><a href="../mbedtls_mpi_fill_random/" style="color: #fcfcfc">Next »</a></span>
+</span>
+</div>
+<script src="../../js/jquery-3.6.0.min.js"></script>
+<script>var base_url = "../..";</script>
+<script src="../../js/theme_extra.js"></script>
+<script src="../../js/theme.js"></script>
+<script src="../../search/main.js"></script>
+<script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+<script type="module">import mermaid from "https://unpkg.com/mermaid@10.4.0/dist/mermaid.esm.min.mjs";
+mermaid.initialize({
+    securityLevel: "loose"
+});</script></body>
+</html>

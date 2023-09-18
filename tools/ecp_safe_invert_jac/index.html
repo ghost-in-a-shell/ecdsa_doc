@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+
+<html class="writer-html5" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="../../img/favicon.ico" rel="shortcut icon"/>
+<title>ecp_safe_invert_jac - MbedTLS ECDSA签名验签函数解析</title>
+<link href="../../css/theme.css" rel="stylesheet"/>
+<link href="../../css/theme_extra.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" rel="stylesheet"/>
+<script>
+        // Current page data
+        var mkdocs_page_name = "ecp_safe_invert_jac";
+        var mkdocs_page_input_path = "tools\\ecp_safe_invert_jac.md";
+        var mkdocs_page_url = null;
+      </script>
+<!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+</head>
+<body class="wy-body-for-nav" role="document">
+<div class="wy-grid-for-nav">
+<nav class="wy-nav-side stickynav" data-toggle="wy-nav-shift">
+<div class="wy-side-scroll">
+<div class="wy-side-nav-search">
+<a class="icon icon-home" href="../.."> MbedTLS ECDSA签名验签函数解析
+        </a><div role="search">
+<form action="../../search.html" class="wy-form" id="rtd-search-form" method="get">
+<input aria-label="Search docs" name="q" placeholder="Search docs" title="Type search term here" type="text"/>
+</form>
+</div>
+</div>
+<div aria-label="Navigation menu" class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../..">主页</a>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">签名函数解析</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../sign/ecdsasign/">mbedtls_ecdsa_sign</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../sign/signrestartable/">ecdsa_sign_restartable</a>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">验签函数解析</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../verify/fun3/">mbedtls_ecdsa_verify</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../verify/fun4/">ecdsa_verify_restartable</a>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">工具函数解析</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../ECDSA_VALIDATE_RET/">ECDSA_VALIDATE_RET</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../mbedtls_ecp_gen_privkey/">mbedtls_ecp_gen_privkey</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../mbedtls_mpi_fill_random/">mbedtls_mpi_fill_random</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../mbedtls_ecp_mul_restartable/">mbedtls_ecp_mul_restartable</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ecp_mul_comb_core/">ecp_mul_comb_core</a>
+</li>
+<li class="toctree-l1 current"><a class="reference internal current" href="./">ecp_safe_invert_jac</a>
+<ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="#_1">函数流程</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#_2">函数代码</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#_3">函数说明</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#mbedtls_mpi_safe_cond_assignbignumc-249">mbedtls_mpi_safe_cond_assign（bignum.c 249）函数代码</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#mbedtls_mpi_safe_cond_assign">mbedtls_mpi_safe_cond_assign函数说明</a>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../muladd/">mbedtls_ecp_muladd_restartable</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../mpi/">大整数计算函数</a>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">总结</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../concl/">总结</a>
+</li>
+</ul>
+</div>
+</div>
+</nav>
+<section class="wy-nav-content-wrap" data-toggle="wy-nav-shift">
+<nav aria-label="Mobile navigation menu" class="wy-nav-top" role="navigation">
+<i class="fa fa-bars" data-toggle="wy-nav-top"></i>
+<a href="../..">MbedTLS ECDSA签名验签函数解析</a>
+</nav>
+<div class="wy-nav-content">
+<div class="rst-content"><div aria-label="breadcrumbs navigation" role="navigation">
+<ul class="wy-breadcrumbs">
+<li><a aria-label="Docs" class="icon icon-home" href="../.."></a> »</li>
+<li>工具函数解析 »</li>
+<li class="breadcrumb-item active">ecp_safe_invert_jac</li>
+<li class="wy-breadcrumbs-aside">
+</li>
+</ul>
+<hr/>
+</div>
+<div class="document" itemscope="itemscope" itemtype="http://schema.org/Article" role="main">
+<div class="section" itemprop="articleBody">
+<h1 id="ecp_safe_invert_jac-ecpc-1226">ecp_safe_invert_jac (ecp.c 1226)</h1>
+<h2 id="_1">函数流程</h2>
+<div class="mermaid">graph TB
+    Z[ecp_safe_invert_jac函数]
+    A[输入] --&gt;B(初始化)
+    B --&gt; C(计算P - Q.Y)
+    C --&gt; D[mbedtls_mpi_safe_cond_assign函数]
+    subgraph a
+    D --&gt; E(时间恒定的条件赋值)
+    end
+    E --&gt; R[输出]
+
+</div>
+<h2 id="_2">函数代码</h2>
+<div class="highlight"><pre><span></span><code><span class="k">static</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">ecp_safe_invert_jac</span><span class="p">(</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">mbedtls_ecp_group</span><span class="w"> </span><span class="o">*</span><span class="n">grp</span><span class="p">,</span>
+<span class="w">                            </span><span class="n">mbedtls_ecp_point</span><span class="w"> </span><span class="o">*</span><span class="n">Q</span><span class="p">,</span>
+<span class="w">                            </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">inv</span><span class="w"> </span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">ret</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">nonzero</span><span class="p">;</span>
+<span class="w">    </span><span class="n">mbedtls_mpi</span><span class="w"> </span><span class="n">mQY</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">mbedtls_mpi_init</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">mQY</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="cm">/* Use the fact that -Q.Y mod P = P - Q.Y unless Q.Y == 0 */</span>
+<span class="w">    </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_sub_mpi</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">mQY</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">P</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Q</span><span class="o">-&gt;</span><span class="n">Y</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">nonzero</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mbedtls_mpi_cmp_int</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Q</span><span class="o">-&gt;</span><span class="n">Y</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_safe_cond_assign</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">Q</span><span class="o">-&gt;</span><span class="n">Y</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">mQY</span><span class="p">,</span><span class="w"> </span><span class="n">inv</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">nonzero</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="nl">cleanup</span><span class="p">:</span>
+<span class="w">    </span><span class="n">mbedtls_mpi_free</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">mQY</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">return</span><span class="p">(</span><span class="w"> </span><span class="n">ret</span><span class="w"> </span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="_3">函数说明</h2>
+<ul>
+<li>首先，通过调用<code>mbedtls_mpi_init()</code>函数对<code>mQY</code>进行初始化。</li>
+<li>接下来，计算<code>-Q.Y mod P</code>，即<code>P - Q.Y</code>，并将结果存储在<code>mQY</code>中。这一步利用了椭圆曲线的性质，即<code>-Q.Y mod P</code>等于<code>P - Q.Y</code>。</li>
+<li>然后，判断点<code>Q</code>的<code>Y</code>坐标是否为非零值，将判断结果存储在<code>nonzero</code>中。</li>
+<li>使用<code>mbedtls_mpi_safe_cond_assign()</code>函数根据<code>inv</code>和<code>nonzero</code>的值来进行条件赋值操作，即如果<code>inv</code>为真且<code>nonzero</code>为真，则将<code>mQY</code>的值赋给<code>Q-&gt;Y</code>，否则不进行赋值操作。</li>
+<li>最后，通过调用<code>mbedtls_mpi_free()</code>函数释放<code>mQY</code>的内存空间。</li>
+</ul>
+<h2 id="mbedtls_mpi_safe_cond_assignbignumc-249">mbedtls_mpi_safe_cond_assign（bignum.c 249）函数代码</h2>
+<div class="highlight"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">mbedtls_mpi_safe_cond_assign</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi</span><span class="w"> </span><span class="o">*</span><span class="n">X</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">mbedtls_mpi</span><span class="w"> </span><span class="o">*</span><span class="n">Y</span><span class="p">,</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">assign</span><span class="w"> </span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">ret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="p">;</span>
+<span class="w">    </span><span class="n">MPI_VALIDATE_RET</span><span class="p">(</span><span class="w"> </span><span class="n">X</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">MPI_VALIDATE_RET</span><span class="p">(</span><span class="w"> </span><span class="n">Y</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="cm">/* make sure assign is 0 or 1 in a time-constant manner */</span>
+<span class="w">    </span><span class="n">assign</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">assign</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="p">)</span><span class="o">-</span><span class="n">assign</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;&gt;</span><span class="w"> </span><span class="mi">7</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_grow</span><span class="p">(</span><span class="w"> </span><span class="n">X</span><span class="p">,</span><span class="w"> </span><span class="n">Y</span><span class="o">-&gt;</span><span class="n">n</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">X</span><span class="o">-&gt;</span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">X</span><span class="o">-&gt;</span><span class="n">s</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">assign</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">Y</span><span class="o">-&gt;</span><span class="n">s</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">assign</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">Y</span><span class="o">-&gt;</span><span class="n">n</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="n">X</span><span class="o">-&gt;</span><span class="n">p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">X</span><span class="o">-&gt;</span><span class="n">p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">assign</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">Y</span><span class="o">-&gt;</span><span class="n">p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">assign</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">for</span><span class="p">(</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">X</span><span class="o">-&gt;</span><span class="n">n</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="n">X</span><span class="o">-&gt;</span><span class="n">p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">assign</span><span class="w"> </span><span class="p">);</span>
+
+<span class="nl">cleanup</span><span class="p">:</span>
+<span class="w">    </span><span class="k">return</span><span class="p">(</span><span class="w"> </span><span class="n">ret</span><span class="w"> </span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="mbedtls_mpi_safe_cond_assign">mbedtls_mpi_safe_cond_assign函数说明</h2>
+<p><strong>条件赋值X=Y，不泄露信息。</strong></p>
+<div class="highlight"><pre><span></span><code>assign = (assign | (unsigned char)-assign) &gt;&gt; 7;
+</code></pre></div>
+<p><strong>这段代码的目的是确保<code>assign</code>的值在时间上是恒定的</strong>，并将其限制为0或1。它使用位运算将<code>assign</code>与其负值按位或运算，然后右移7位，从而将<code>assign</code>的最高有效位移位到最低有效位，得到0或1。</p>
+<p>然后，通过调用<code>mbedtls_mpi_grow</code>函数，使<code>X</code>的大小增长到与<code>Y-&gt;n</code>相同的长度：</p>
+<div class="highlight"><pre><span></span><code>MBEDTLS_MPI_CHK(mbedtls_mpi_grow( X, Y-&gt;n ));
+</code></pre></div>
+<p>接下来，循环对<code>X-&gt;p[i]</code>进行条件赋值：</p>
+<div class="highlight"><pre><span></span><code>for( i = 0; i &lt; Y-&gt;n; i++ )
+    X-&gt;p[i] = X-&gt;p[i] * ( 1 - assign ) + Y-&gt;p[i] * assign;
+</code></pre></div>
+<p>这段代码根据<code>assign</code>的值（0或1），对<code>X-&gt;p[i]</code>进行条件赋值。如果<code>assign</code>为0，则将<code>X-&gt;p[i]</code>乘以(1 - assign)，即0，然后加上<code>Y-&gt;p[i]</code>乘以assign，即为0；如果<code>assign</code>为1，则将<code>X-&gt;p[i]</code>乘以(1 - assign)，即为0，然后加上<code>Y-&gt;p[i]</code>乘以assign，即为<code>Y-&gt;p[i]</code>。</p>
+<p>最后，对于<code>i</code>从<code>Y-&gt;n</code>到<code>X-&gt;n</code>的范围，将<code>X-&gt;p[i]</code>乘以(1 - assign)：</p>
+<div class="highlight"><pre><span></span><code>for( ; i &lt; X-&gt;n; i++ )
+    X-&gt;p[i] *= ( 1 - assign );
+</code></pre></div>
+</div>
+</div><footer>
+<div aria-label="Footer Navigation" class="rst-footer-buttons" role="navigation">
+<a class="btn btn-neutral float-left" href="../ecp_mul_comb_core/" title="ecp_mul_comb_core"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+<a class="btn btn-neutral float-right" href="../muladd/" title="mbedtls_ecp_muladd_restartable">Next <span class="icon icon-circle-arrow-right"></span></a>
+</div>
+<hr/>
+<div role="contentinfo">
+<!-- Copyright etc -->
+</div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+</div>
+</div>
+</section>
+</div>
+<div aria-label="Versions" class="rst-versions" role="note">
+<span class="rst-current-version" data-toggle="rst-current-version">
+<span><a href="../ecp_mul_comb_core/" style="color: #fcfcfc">« Previous</a></span>
+<span><a href="../muladd/" style="color: #fcfcfc">Next »</a></span>
+</span>
+</div>
+<script src="../../js/jquery-3.6.0.min.js"></script>
+<script>var base_url = "../..";</script>
+<script src="../../js/theme_extra.js"></script>
+<script src="../../js/theme.js"></script>
+<script src="../../search/main.js"></script>
+<script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+<script type="module">import mermaid from "https://unpkg.com/mermaid@10.4.0/dist/mermaid.esm.min.mjs";
+mermaid.initialize({
+    securityLevel: "loose"
+});</script></body>
+</html>

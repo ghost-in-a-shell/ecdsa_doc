@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+
+<html class="writer-html5" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="IE=edge" http-equiv="X-UA-Compatible"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="../../img/favicon.ico" rel="shortcut icon"/>
+<title>mbedtls_ecp_mul_restartable - MbedTLS ECDSA签名验签函数解析</title>
+<link href="../../css/theme.css" rel="stylesheet"/>
+<link href="../../css/theme_extra.css" rel="stylesheet"/>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" rel="stylesheet"/>
+<script>
+        // Current page data
+        var mkdocs_page_name = "mbedtls_ecp_mul_restartable";
+        var mkdocs_page_input_path = "tools\\mbedtls_ecp_mul_restartable.md";
+        var mkdocs_page_url = null;
+      </script>
+<!--[if lt IE 9]>
+      <script src="../../js/html5shiv.min.js"></script>
+    <![endif]-->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+<script>hljs.highlightAll();</script>
+</head>
+<body class="wy-body-for-nav" role="document">
+<div class="wy-grid-for-nav">
+<nav class="wy-nav-side stickynav" data-toggle="wy-nav-shift">
+<div class="wy-side-scroll">
+<div class="wy-side-nav-search">
+<a class="icon icon-home" href="../.."> MbedTLS ECDSA签名验签函数解析
+        </a><div role="search">
+<form action="../../search.html" class="wy-form" id="rtd-search-form" method="get">
+<input aria-label="Search docs" name="q" placeholder="Search docs" title="Type search term here" type="text"/>
+</form>
+</div>
+</div>
+<div aria-label="Navigation menu" class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../..">主页</a>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">签名函数解析</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../sign/ecdsasign/">mbedtls_ecdsa_sign</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../sign/signrestartable/">ecdsa_sign_restartable</a>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">验签函数解析</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../verify/fun3/">mbedtls_ecdsa_verify</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../verify/fun4/">ecdsa_verify_restartable</a>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">工具函数解析</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../ECDSA_VALIDATE_RET/">ECDSA_VALIDATE_RET</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../mbedtls_ecp_gen_privkey/">mbedtls_ecp_gen_privkey</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../mbedtls_mpi_fill_random/">mbedtls_mpi_fill_random</a>
+</li>
+<li class="toctree-l1 current"><a class="reference internal current" href="./">mbedtls_ecp_mul_restartable</a>
+<ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="#_1">函数流程</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#_2">函数代码</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#_3">函数说明</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#ecp_mul_mxzecpc-2263">ecp_mul_mxz函数代码(ecp.c 2263)</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#ecp_mul_mxz">ecp_mul_mxz函数说明</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#ecp_mul_combecpc-2001">ecp_mul_comb函数代码(ecp.c 2001)</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#ecp_mul_comb">ecp_mul_comb函数说明</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#ecp_mul_comb_after_precompecpc-1903">ecp_mul_comb_after_precomp函数代码（ecp.c 1903）</a>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#ecp_mul_comb_after_precomp">ecp_mul_comb_after_precomp函数说明</a>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ecp_mul_comb_core/">ecp_mul_comb_core</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../ecp_safe_invert_jac/">ecp_safe_invert_jac</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../muladd/">mbedtls_ecp_muladd_restartable</a>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../mpi/">大整数计算函数</a>
+</li>
+</ul>
+<p class="caption"><span class="caption-text">总结</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../concl/">总结</a>
+</li>
+</ul>
+</div>
+</div>
+</nav>
+<section class="wy-nav-content-wrap" data-toggle="wy-nav-shift">
+<nav aria-label="Mobile navigation menu" class="wy-nav-top" role="navigation">
+<i class="fa fa-bars" data-toggle="wy-nav-top"></i>
+<a href="../..">MbedTLS ECDSA签名验签函数解析</a>
+</nav>
+<div class="wy-nav-content">
+<div class="rst-content"><div aria-label="breadcrumbs navigation" role="navigation">
+<ul class="wy-breadcrumbs">
+<li><a aria-label="Docs" class="icon icon-home" href="../.."></a> »</li>
+<li>工具函数解析 »</li>
+<li class="breadcrumb-item active">mbedtls_ecp_mul_restartable</li>
+<li class="wy-breadcrumbs-aside">
+</li>
+</ul>
+<hr/>
+</div>
+<div class="document" itemscope="itemscope" itemtype="http://schema.org/Article" role="main">
+<div class="section" itemprop="articleBody">
+<h1 id="mbedtls_ecp_mul_restartableecpc-2324">mbedtls_ecp_mul_restartable（ecp.c 2324）</h1>
+<h2 id="_1">函数流程</h2>
+<div class="mermaid">graph TB
+    Z[mbedtls_ecp_mul_restartable函数]
+    A[输入] --&gt;B(定义变量,检查合法性)
+    B --&gt; C(如果开启restartable则存储状态)
+    C --&gt; |ECP_MONTGOMERY|E[ecp_mul_mxz函数]
+    subgraph a
+    E --&gt; G(初始化)
+    G --&gt; H(随机化临时点坐标)
+    H --&gt; I(montgomery ladder计算乘法)
+    end
+    I --&gt; J[输出]
+    C --&gt; |ECP_SHORTWEIERSTRASS|F[ecp_mul_comb函数]
+    subgraph b
+    F --&gt; K(初始化和断点)
+    K --&gt; L(生成预计算点表)   
+    L --&gt; M[ecp_mul_comb_after_precomp函数]
+    subgraph c
+    M --&gt; N(对标量值进行编码)
+    N --&gt; O(ecp_mul_comb_core函数点乘)
+    O --&gt; P(ecp_safe_invert_jac函数雅可比坐标系安全反转)
+    P --&gt; Q(normalize)
+    end
+    end
+    Q --&gt; R[输出]
+
+    click O "../../tools/ecp_mul_comb_core"
+    click P "../../tools/ecp_safe_invert_jac"
+
+</div>
+<h2 id="_2">函数代码</h2>
+<div class="highlight"><pre><span></span><code><span class="kt">int</span><span class="w"> </span><span class="nf">mbedtls_ecp_mul_restartable</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_ecp_group</span><span class="w"> </span><span class="o">*</span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">mbedtls_ecp_point</span><span class="w"> </span><span class="o">*</span><span class="n">R</span><span class="p">,</span>
+<span class="w">             </span><span class="k">const</span><span class="w"> </span><span class="n">mbedtls_mpi</span><span class="w"> </span><span class="o">*</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">mbedtls_ecp_point</span><span class="w"> </span><span class="o">*</span><span class="n">P</span><span class="p">,</span>
+<span class="w">             </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">f_rng</span><span class="p">)(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="p">),</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">p_rng</span><span class="p">,</span>
+<span class="w">             </span><span class="n">mbedtls_ecp_restart_ctx</span><span class="w"> </span><span class="o">*</span><span class="n">rs_ctx</span><span class="w"> </span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">ret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MBEDTLS_ERR_ECP_BAD_INPUT_DATA</span><span class="p">;</span>
+<span class="cp">#if defined(MBEDTLS_ECP_INTERNAL_ALT)</span>
+<span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">is_grp_capable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="cp">#endif</span>
+<span class="w">    </span><span class="n">ECP_VALIDATE_RET</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">ECP_VALIDATE_RET</span><span class="p">(</span><span class="w"> </span><span class="n">R</span><span class="w">   </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">ECP_VALIDATE_RET</span><span class="p">(</span><span class="w"> </span><span class="n">m</span><span class="w">   </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">ECP_VALIDATE_RET</span><span class="p">(</span><span class="w"> </span><span class="n">P</span><span class="w">   </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">);</span>
+
+<span class="cp">#if defined(MBEDTLS_ECP_RESTARTABLE)</span>
+<span class="w">    </span><span class="cm">/* reset ops count for this call if top-level */</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">rs_ctx</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">depth</span><span class="o">++</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">ops_done</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="cp">#endif</span>
+
+<span class="cp">#if defined(MBEDTLS_ECP_INTERNAL_ALT)</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="n">is_grp_capable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mbedtls_internal_ecp_grp_capable</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_internal_ecp_init</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="cp">#endif </span><span class="cm">/* MBEDTLS_ECP_INTERNAL_ALT */</span>
+
+<span class="cp">#if defined(MBEDTLS_ECP_RESTARTABLE)</span>
+<span class="w">    </span><span class="cm">/* skip argument check when restarting */</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">rs_ctx</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">rsm</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">)</span>
+<span class="cp">#endif</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="cm">/* check_privkey is free */</span>
+<span class="w">        </span><span class="n">MBEDTLS_ECP_BUDGET</span><span class="p">(</span><span class="w"> </span><span class="n">MBEDTLS_ECP_OPS_CHK</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">        </span><span class="cm">/* Common sanity checks */</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_ecp_check_privkey</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_ecp_check_pubkey</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">P</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">ret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MBEDTLS_ERR_ECP_BAD_INPUT_DATA</span><span class="p">;</span>
+<span class="cp">#if defined(ECP_MONTGOMERY)</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">ecp_get_type</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">ECP_TYPE_MONTGOMERY</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">ecp_mul_mxz</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">R</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">P</span><span class="p">,</span><span class="w"> </span><span class="n">f_rng</span><span class="p">,</span><span class="w"> </span><span class="n">p_rng</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="cp">#endif</span>
+<span class="cp">#if defined(ECP_SHORTWEIERSTRASS)</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">ecp_get_type</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">ECP_TYPE_SHORT_WEIERSTRASS</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">ecp_mul_comb</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">R</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">P</span><span class="p">,</span><span class="w"> </span><span class="n">f_rng</span><span class="p">,</span><span class="w"> </span><span class="n">p_rng</span><span class="p">,</span><span class="w"> </span><span class="n">rs_ctx</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="cp">#endif</span>
+
+<span class="nl">cleanup</span><span class="p">:</span>
+
+<span class="cp">#if defined(MBEDTLS_ECP_INTERNAL_ALT)</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">is_grp_capable</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="n">mbedtls_internal_ecp_free</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="w"> </span><span class="p">);</span>
+<span class="cp">#endif </span><span class="cm">/* MBEDTLS_ECP_INTERNAL_ALT */</span>
+
+<span class="cp">#if defined(MBEDTLS_ECP_RESTARTABLE)</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">rs_ctx</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">depth</span><span class="o">--</span><span class="p">;</span>
+<span class="cp">#endif</span>
+
+<span class="w">    </span><span class="k">return</span><span class="p">(</span><span class="w"> </span><span class="n">ret</span><span class="w"> </span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="_3">函数说明</h2>
+<p><strong>用于执行椭圆曲线上的乘法操作</strong></p>
+<p>根据曲线分类调用不同的处理函数，如果是montgomery则调用ecp_mul_mxz，反之调用ecp_mul_comb</p>
+<h2 id="ecp_mul_mxzecpc-2263">ecp_mul_mxz函数代码(ecp.c 2263)</h2>
+<div class="highlight"><pre><span></span><code><span class="k">static</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">ecp_mul_mxz</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_ecp_group</span><span class="w"> </span><span class="o">*</span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">mbedtls_ecp_point</span><span class="w"> </span><span class="o">*</span><span class="n">R</span><span class="p">,</span>
+<span class="w">                        </span><span class="k">const</span><span class="w"> </span><span class="n">mbedtls_mpi</span><span class="w"> </span><span class="o">*</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">mbedtls_ecp_point</span><span class="w"> </span><span class="o">*</span><span class="n">P</span><span class="p">,</span>
+<span class="w">                        </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">f_rng</span><span class="p">)(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="p">),</span>
+<span class="w">                        </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">p_rng</span><span class="w"> </span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">ret</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">i</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">b</span><span class="p">;</span>
+<span class="w">    </span><span class="n">mbedtls_ecp_point</span><span class="w"> </span><span class="n">RP</span><span class="p">;</span>
+<span class="w">    </span><span class="n">mbedtls_mpi</span><span class="w"> </span><span class="n">PX</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">mbedtls_ecp_point_init</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">RP</span><span class="w"> </span><span class="p">);</span><span class="w"> </span><span class="n">mbedtls_mpi_init</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">PX</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="cm">/* Save PX and read from P before writing to R, in case P == R */</span>
+<span class="w">    </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_copy</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">PX</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">P</span><span class="o">-&gt;</span><span class="n">X</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_ecp_copy</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">RP</span><span class="p">,</span><span class="w"> </span><span class="n">P</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="cm">/* Set R to zero in modified x/z coordinates */</span>
+<span class="w">    </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_lset</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">R</span><span class="o">-&gt;</span><span class="n">X</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_lset</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">R</span><span class="o">-&gt;</span><span class="n">Z</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">mbedtls_mpi_free</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">R</span><span class="o">-&gt;</span><span class="n">Y</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="cm">/* RP.X might be sligtly larger than P, so reduce it */</span>
+<span class="w">    </span><span class="n">MOD_ADD</span><span class="p">(</span><span class="w"> </span><span class="n">RP</span><span class="p">.</span><span class="n">X</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="cm">/* Randomize coordinates of the starting point */</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">f_rng</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">ecp_randomize_mxz</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">RP</span><span class="p">,</span><span class="w"> </span><span class="n">f_rng</span><span class="p">,</span><span class="w"> </span><span class="n">p_rng</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="cm">/* Loop invariant: R = result so far, RP = R + P */</span>
+<span class="w">    </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mbedtls_mpi_bitlen</span><span class="p">(</span><span class="w"> </span><span class="n">m</span><span class="w"> </span><span class="p">);</span><span class="w"> </span><span class="cm">/* one past the (zero-based) most significant bit */</span>
+<span class="w">    </span><span class="k">while</span><span class="p">(</span><span class="w"> </span><span class="n">i</span><span class="o">--</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mbedtls_mpi_get_bit</span><span class="p">(</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="cm">/*</span>
+<span class="cm">         *  if (b) R = 2R + P else R = 2R,</span>
+<span class="cm">         * which is:</span>
+<span class="cm">         *  if (b) double_add( RP, R, RP, R )</span>
+<span class="cm">         *  else   double_add( R, RP, R, RP )</span>
+<span class="cm">         * but using safe conditional swaps to avoid leaks</span>
+<span class="cm">         */</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_safe_cond_swap</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">R</span><span class="o">-&gt;</span><span class="n">X</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">RP</span><span class="p">.</span><span class="n">X</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_safe_cond_swap</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">R</span><span class="o">-&gt;</span><span class="n">Z</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">RP</span><span class="p">.</span><span class="n">Z</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">ecp_double_add_mxz</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">R</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">RP</span><span class="p">,</span><span class="w"> </span><span class="n">R</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">RP</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">PX</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_safe_cond_swap</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">R</span><span class="o">-&gt;</span><span class="n">X</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">RP</span><span class="p">.</span><span class="n">X</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_safe_cond_swap</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">R</span><span class="o">-&gt;</span><span class="n">Z</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">RP</span><span class="p">.</span><span class="n">Z</span><span class="p">,</span><span class="w"> </span><span class="n">b</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">ecp_normalize_mxz</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">R</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="nl">cleanup</span><span class="p">:</span>
+<span class="w">    </span><span class="n">mbedtls_ecp_point_free</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">RP</span><span class="w"> </span><span class="p">);</span><span class="w"> </span><span class="n">mbedtls_mpi_free</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">PX</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">return</span><span class="p">(</span><span class="w"> </span><span class="n">ret</span><span class="w"> </span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="ecp_mul_mxz">ecp_mul_mxz函数说明</h2>
+<p>函数的输入参数包括椭圆曲线群 grp、结果存储点 R、乘数 m、被乘点 P、随机数生成函数 f_rng 和随机数生成器上下文指针 p_rng。</p>
+<p>函数首先初始化一些变量和数据结构。然后，函数保存了点 P 的 x 坐标，并将点 P 复制到临时点 RP中，以便在计算过程中保持不变。</p>
+<p>接着，函数将点 R 的 x/z 坐标设置为 1 和 0，并释放点 R 的 y 坐标。这是 "Montgomery ladder" 算法的初始化步骤。</p>
+<p>然后，函数对临时点 RP 的 x 坐标执行模运算，以确保该值在椭圆曲线的定义域内。</p>
+<p><strong>接下来，函数使用随机数生成函数 f_rng 随机化临时点 RP的 x/z 坐标，从而增加攻击难度。（侧信道保护机制）</strong></p>
+<p><strong>然后，函数根据乘数 m的二进制表示形式，使用 "Montgomery ladder" 算法来计算点 R的值。(可替换为普通实现)</strong></p>
+<p>Montgomery ladder 算法的基本思想：
+将点 P 用 Montgomery representation 表示为 (X1:Z1)，其中 X1 和 Z1 都是整数。
+初始化两个点，R0 = (1:0) 和 R1 = (X1:1)。
+从 m 的最高位开始，对每一位进行处理：
+如果该位为 0，则将 R1 加倍，并将 R0 和 R1 交换。
+如果该位为 1，则将 R0 与 R1 相加，并将 R0 和 R1 交换。
+返回 R0。</p>
+<p>最后，函数对点 <code>R</code> 进行归一化，以确保它在椭圆曲线的定义域内。然后，函数释放内存并返回结果。</p>
+<h2 id="ecp_mul_combecpc-2001">ecp_mul_comb函数代码(ecp.c 2001)</h2>
+<div class="highlight"><pre><span></span><code><span class="k">static</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">ecp_mul_comb</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_ecp_group</span><span class="w"> </span><span class="o">*</span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">mbedtls_ecp_point</span><span class="w"> </span><span class="o">*</span><span class="n">R</span><span class="p">,</span>
+<span class="w">                         </span><span class="k">const</span><span class="w"> </span><span class="n">mbedtls_mpi</span><span class="w"> </span><span class="o">*</span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">mbedtls_ecp_point</span><span class="w"> </span><span class="o">*</span><span class="n">P</span><span class="p">,</span>
+<span class="w">                         </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">f_rng</span><span class="p">)(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="p">),</span>
+<span class="w">                         </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">p_rng</span><span class="p">,</span>
+<span class="w">                         </span><span class="n">mbedtls_ecp_restart_ctx</span><span class="w"> </span><span class="o">*</span><span class="n">rs_ctx</span><span class="w"> </span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">ret</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">w</span><span class="p">,</span><span class="w"> </span><span class="n">p_eq_g</span><span class="p">,</span><span class="w"> </span><span class="n">i</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">size_t</span><span class="w"> </span><span class="n">d</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">T_size</span><span class="p">,</span><span class="w"> </span><span class="n">T_ok</span><span class="p">;</span>
+<span class="w">    </span><span class="n">mbedtls_ecp_point</span><span class="w"> </span><span class="o">*</span><span class="n">T</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">ECP_RS_ENTER</span><span class="p">(</span><span class="w"> </span><span class="n">rsm</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">    </span><span class="cm">/* Is P the base point ? */</span>
+<span class="cp">#if MBEDTLS_ECP_FIXED_POINT_OPTIM == 1</span>
+<span class="w">    </span><span class="n">p_eq_g</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_mpi_cmp_mpi</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">P</span><span class="o">-&gt;</span><span class="n">Y</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">G</span><span class="p">.</span><span class="n">Y</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="o">&amp;&amp;</span>
+<span class="w">               </span><span class="n">mbedtls_mpi_cmp_mpi</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">P</span><span class="o">-&gt;</span><span class="n">X</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">G</span><span class="p">.</span><span class="n">X</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">);</span>
+<span class="cp">#else</span>
+<span class="w">    </span><span class="n">p_eq_g</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="cp">#endif</span>
+
+<span class="w">    </span><span class="cm">/* Pick window size and deduce related sizes */</span>
+<span class="w">    </span><span class="n">w</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ecp_pick_window_size</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">p_eq_g</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">T_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1U</span><span class="w"> </span><span class="o">&lt;&lt;</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="n">w</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">d</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">nbits</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">w</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">w</span><span class="p">;</span>
+
+<span class="w">    </span><span class="cm">/* Pre-computed table: do we have it already for the base point? */</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">p_eq_g</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">T</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="cm">/* second pointer to the same table, will be deleted on exit */</span>
+<span class="w">        </span><span class="n">T</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">T</span><span class="p">;</span>
+<span class="w">        </span><span class="n">T_ok</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">else</span>
+<span class="cp">#if defined(MBEDTLS_ECP_RESTARTABLE)</span>
+<span class="w">    </span><span class="cm">/* Pre-computed table: do we have one in progress? complete? */</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">rs_ctx</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">rsm</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">rsm</span><span class="o">-&gt;</span><span class="n">T</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="cm">/* transfer ownership of T from rsm to local function */</span>
+<span class="w">        </span><span class="n">T</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">rsm</span><span class="o">-&gt;</span><span class="n">T</span><span class="p">;</span>
+<span class="w">        </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">rsm</span><span class="o">-&gt;</span><span class="n">T</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+<span class="w">        </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">rsm</span><span class="o">-&gt;</span><span class="n">T_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+
+<span class="w">        </span><span class="cm">/* This effectively jumps to the call to mul_comb_after_precomp() */</span>
+<span class="w">        </span><span class="n">T_ok</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">rsm</span><span class="o">-&gt;</span><span class="n">state</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">ecp_rsm_comb_core</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">else</span>
+<span class="cp">#endif</span>
+<span class="w">    </span><span class="cm">/* Allocate table if we didn't have any */</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">T</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mbedtls_calloc</span><span class="p">(</span><span class="w"> </span><span class="n">T_size</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_ecp_point</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">T</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="n">ret</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MBEDTLS_ERR_ECP_ALLOC_FAILED</span><span class="p">;</span>
+<span class="w">            </span><span class="k">goto</span><span class="w"> </span><span class="n">cleanup</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">T_size</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="w"> </span><span class="p">)</span>
+<span class="w">            </span><span class="n">mbedtls_ecp_point_init</span><span class="p">(</span><span class="w"> </span><span class="o">&amp;</span><span class="n">T</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">T_ok</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/* Compute table (or finish computing it) if not done already */</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="o">!</span><span class="n">T_ok</span><span class="w"> </span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">ecp_precompute_comb</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">P</span><span class="p">,</span><span class="w"> </span><span class="n">w</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">rs_ctx</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">p_eq_g</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="cm">/* almost transfer ownership of T to the group, but keep a copy of</span>
+<span class="cm">             * the pointer to use for calling the next function more easily */</span>
+<span class="w">            </span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">T</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">T</span><span class="p">;</span>
+<span class="w">            </span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">T_size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">T_size</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/* Actual comb multiplication using precomputed points */</span>
+<span class="w">    </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">ecp_mul_comb_after_precomp</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">R</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">,</span>
+<span class="w">                                                 </span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">T_size</span><span class="p">,</span><span class="w"> </span><span class="n">w</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">,</span>
+<span class="w">                                                 </span><span class="n">f_rng</span><span class="p">,</span><span class="w"> </span><span class="n">p_rng</span><span class="p">,</span><span class="w"> </span><span class="n">rs_ctx</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="nl">cleanup</span><span class="p">:</span>
+
+<span class="w">    </span><span class="cm">/* does T belong to the group? */</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">T</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">grp</span><span class="o">-&gt;</span><span class="n">T</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="n">T</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+</code></pre></div>
+<h2 id="ecp_mul_comb">ecp_mul_comb函数说明</h2>
+<p>椭圆曲线上的点乘法运算，使用了组合算法（Comb method）来优化计算效率。</p>
+<ol>
+<li>首先，函数声明了一些变量和指针，如果开启了restartable则记录断点。</li>
+<li>函数检查点 P 是否为基点，即 P 是否与椭圆曲线群的基点 G 相等。如果 <code>MBEDTLS_ECP_FIXED_POINT_OPTIM</code> 定义为 1，并且 P 的坐标与 G 的坐标相等，则将 p_eq_g 设置为 1；否则设置为 0。</li>
+<li>函数调用 <code>ecp_pick_window_size</code> 来选择窗口大小，窗口大小的选择取决于 p_eq_g 的值和椭圆曲线群的参数。窗口大小决定了预计算表的大小。</li>
+<li>根据窗口大小计算预计算表的大小，并计算 <code>d</code> 的值，<code>d</code> 表示标量值的位数除以窗口大小后的结果。</li>
+<li>函数根据是否已经存在基点的预计算表来判断是否需要进行预计算表的生成：</li>
+<li>如果 p_eq_g 为真且 grp-&gt;T 不为空，则直接使用 grp-&gt;T 作为预计算表，并将 T_ok 设置为 1。</li>
+<li>否则，如果启用了重启功能，并且存在正在进行的预计算表，则将预计算表从 rs_ctx 中转移到本地变量 T 中，并将 T_ok 设置为 1。</li>
+<li>否则，分配 T_size 大小的内存用于存储预计算表，并初始化预计算表中的点。
+     如果内存分配失败，则返回 <code>MBEDTLS_ERR_ECP_ALLOC_FAILED</code> 错误。</li>
+<li>如果预计算表不存在或者需要重新计算，调用 <code>ecp_precompute_comb</code> 函数生成预计算表。该函数使用组合算法（Comb method）来生成预计算表，提前计算出一系列点的坐标，以用于后续的点乘法运算。生成预计算表的过程可能会涉及到重启功能。</li>
+<li>如果 P 是基点，则将 T 的所有权转移到群结构体 grp 中，并将 grp-&gt;T 和 grp-&gt;T_size 设置为相应的值。</li>
+<li>最后，调用 <code>ecp_mul_comb_after_precomp</code> 函数执行基于预计算表的点乘法运算。该函数使用预计算表中的点进行点乘法运算，可以大大提高计算效率。运算结果存储在 R 中。</li>
+<li>清理阶段，释放预计算表的内存资源，并根据 T 是否属于群结构体 grp 来确定是否将 T 设置为 NULL。</li>
+</ol>
+<p>其中核心函数为ecp_mul_comb_after_precomp</p>
+<h2 id="ecp_mul_comb_after_precompecpc-1903">ecp_mul_comb_after_precomp函数代码（ecp.c 1903）</h2>
+<div class="highlight"><pre><span></span><code><span class="k">static</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">ecp_mul_comb_after_precomp</span><span class="p">(</span><span class="w"> </span><span class="k">const</span><span class="w"> </span><span class="n">mbedtls_ecp_group</span><span class="w"> </span><span class="o">*</span><span class="n">grp</span><span class="p">,</span>
+<span class="w">                                </span><span class="n">mbedtls_ecp_point</span><span class="w"> </span><span class="o">*</span><span class="n">R</span><span class="p">,</span>
+<span class="w">                                </span><span class="k">const</span><span class="w"> </span><span class="n">mbedtls_mpi</span><span class="w"> </span><span class="o">*</span><span class="n">m</span><span class="p">,</span>
+<span class="w">                                </span><span class="k">const</span><span class="w"> </span><span class="n">mbedtls_ecp_point</span><span class="w"> </span><span class="o">*</span><span class="n">T</span><span class="p">,</span>
+<span class="w">                                </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">T_size</span><span class="p">,</span>
+<span class="w">                                </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">w</span><span class="p">,</span>
+<span class="w">                                </span><span class="kt">size_t</span><span class="w"> </span><span class="n">d</span><span class="p">,</span>
+<span class="w">                                </span><span class="kt">int</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">f_rng</span><span class="p">)(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="kt">size_t</span><span class="p">),</span>
+<span class="w">                                </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">p_rng</span><span class="p">,</span>
+<span class="w">                                </span><span class="n">mbedtls_ecp_restart_ctx</span><span class="w"> </span><span class="o">*</span><span class="n">rs_ctx</span><span class="w"> </span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">ret</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">parity_trick</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">k</span><span class="p">[</span><span class="n">COMB_MAX_D</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">];</span>
+<span class="w">    </span><span class="n">mbedtls_ecp_point</span><span class="w"> </span><span class="o">*</span><span class="n">RR</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">R</span><span class="p">;</span>
+
+<span class="cp">#if defined(MBEDTLS_ECP_RESTARTABLE)</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">rs_ctx</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">rsm</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">RR</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">rsm</span><span class="o">-&gt;</span><span class="n">R</span><span class="p">;</span>
+
+<span class="w">        </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">rsm</span><span class="o">-&gt;</span><span class="n">state</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">ecp_rsm_final_norm</span><span class="w"> </span><span class="p">)</span>
+<span class="w">            </span><span class="k">goto</span><span class="w"> </span><span class="n">final_norm</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="cp">#endif</span>
+
+<span class="w">    </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">ecp_comb_recode_scalar</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="w"> </span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">,</span><span class="w"> </span><span class="n">w</span><span class="p">,</span>
+<span class="w">                                            </span><span class="o">&amp;</span><span class="n">parity_trick</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">ecp_mul_comb_core</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">RR</span><span class="p">,</span><span class="w"> </span><span class="n">T</span><span class="p">,</span><span class="w"> </span><span class="n">T_size</span><span class="p">,</span><span class="w"> </span><span class="n">k</span><span class="p">,</span><span class="w"> </span><span class="n">d</span><span class="p">,</span>
+<span class="w">                                        </span><span class="n">f_rng</span><span class="p">,</span><span class="w"> </span><span class="n">p_rng</span><span class="p">,</span><span class="w"> </span><span class="n">rs_ctx</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">ecp_safe_invert_jac</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">RR</span><span class="p">,</span><span class="w"> </span><span class="n">parity_trick</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="cp">#if defined(MBEDTLS_ECP_RESTARTABLE)</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">rs_ctx</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">rsm</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">rsm</span><span class="o">-&gt;</span><span class="n">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ecp_rsm_final_norm</span><span class="p">;</span>
+
+<span class="nl">final_norm</span><span class="p">:</span>
+<span class="cp">#endif</span>
+<span class="w">    </span><span class="n">MBEDTLS_ECP_BUDGET</span><span class="p">(</span><span class="w"> </span><span class="n">MBEDTLS_ECP_OPS_INV</span><span class="w"> </span><span class="p">);</span>
+<span class="w">    </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">ecp_normalize_jac</span><span class="p">(</span><span class="w"> </span><span class="n">grp</span><span class="p">,</span><span class="w"> </span><span class="n">RR</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+
+<span class="cp">#if defined(MBEDTLS_ECP_RESTARTABLE)</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="w"> </span><span class="n">rs_ctx</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">rs_ctx</span><span class="o">-&gt;</span><span class="n">rsm</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="w"> </span><span class="p">)</span>
+<span class="w">        </span><span class="n">MBEDTLS_MPI_CHK</span><span class="p">(</span><span class="w"> </span><span class="n">mbedtls_ecp_copy</span><span class="p">(</span><span class="w"> </span><span class="n">R</span><span class="p">,</span><span class="w"> </span><span class="n">RR</span><span class="w"> </span><span class="p">)</span><span class="w"> </span><span class="p">);</span>
+<span class="cp">#endif</span>
+
+<span class="nl">cleanup</span><span class="p">:</span>
+<span class="w">    </span><span class="k">return</span><span class="p">(</span><span class="w"> </span><span class="n">ret</span><span class="w"> </span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<h2 id="ecp_mul_comb_after_precomp">ecp_mul_comb_after_precomp函数说明</h2>
+<ol>
+<li>首先，函数声明了一些变量和指针，如果开启了restartable则记录断点。</li>
+<li>调用ecp_comb_recode_scalar函数对标量值进行编码，得到预计算的窗口表</li>
+<li>调用ecp_mul_comb_core函数执行点乘法运算，使用预计算的窗口表和编码后的标量值。</li>
+<li>调用ecp_safe_invert_jac函数对结果点进行雅可比坐标系下的安全反转（inversion）操作，以确保结果的正确性。</li>
+<li>执行ecp_normalize_jac函数对结果点进行规范化操作，将结果点从雅可比坐标系转换为仿射坐标系。</li>
+<li>如果启用了重启机制，将规范化后的结果点拷贝到输出参数R中。</li>
+<li>返回执行结果。</li>
+</ol>
+</div>
+</div><footer>
+<div aria-label="Footer Navigation" class="rst-footer-buttons" role="navigation">
+<a class="btn btn-neutral float-left" href="../mbedtls_mpi_fill_random/" title="mbedtls_mpi_fill_random"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+<a class="btn btn-neutral float-right" href="../ecp_mul_comb_core/" title="ecp_mul_comb_core">Next <span class="icon icon-circle-arrow-right"></span></a>
+</div>
+<hr/>
+<div role="contentinfo">
+<!-- Copyright etc -->
+</div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+</div>
+</div>
+</section>
+</div>
+<div aria-label="Versions" class="rst-versions" role="note">
+<span class="rst-current-version" data-toggle="rst-current-version">
+<span><a href="../mbedtls_mpi_fill_random/" style="color: #fcfcfc">« Previous</a></span>
+<span><a href="../ecp_mul_comb_core/" style="color: #fcfcfc">Next »</a></span>
+</span>
+</div>
+<script src="../../js/jquery-3.6.0.min.js"></script>
+<script>var base_url = "../..";</script>
+<script src="../../js/theme_extra.js"></script>
+<script src="../../js/theme.js"></script>
+<script src="../../search/main.js"></script>
+<script>
+        jQuery(function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        });
+    </script>
+<script type="module">import mermaid from "https://unpkg.com/mermaid@10.4.0/dist/mermaid.esm.min.mjs";
+mermaid.initialize({
+    securityLevel: "loose"
+});</script></body>
+</html>
