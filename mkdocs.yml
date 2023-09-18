@@ -1,1 +1,39 @@
-site_name: My Docs
+site_name: MbedTLS ECDSA签名验签函数解析
+theme: readthedocs
+nav:
+- 主页: index.md
+- 签名函数解析:
+    - mbedtls_ecdsa_sign: sign/ecdsasign.md
+    - ecdsa_sign_restartable: sign/signrestartable.md
+- 验签函数解析:
+    - mbedtls_ecdsa_verify: verify/fun3.md
+    - ecdsa_verify_restartable: verify/fun4.md
+- 工具函数解析:
+    - ECDSA_VALIDATE_RET: tools/ECDSA_VALIDATE_RET.md
+    - mbedtls_ecp_gen_privkey: tools/mbedtls_ecp_gen_privkey.md
+    - mbedtls_mpi_fill_random: tools/mbedtls_mpi_fill_random.md
+    - mbedtls_ecp_mul_restartable: tools/mbedtls_ecp_mul_restartable.md
+    - ecp_mul_comb_core: tools/ecp_mul_comb_core.md
+    - ecp_safe_invert_jac: tools/ecp_safe_invert_jac.md
+    - mbedtls_ecp_muladd_restartable: tools/muladd.md
+    - 大整数计算函数: tools/mpi.md
+- 总结: 
+    - 总结: concl.md
+
+markdown_extensions:
+    - pymdownx.superfences: # 可在列表等处嵌入块
+        # make exceptions to highlighting of code:
+        custom_fences:
+            - name: mermaid
+              class: mermaid
+              format: !!python/name:mermaid2.fence_mermaid
+plugins:
+    - search: # 搜索
+        lang:
+            - en
+            - ja # 日文，也勉强支持中文
+        separator: '[\s\-\.]+' # 分词分隔符
+        # prebuild_index: true # 预制索引，不成功
+    - mermaid2:
+        arguments:
+            securityLevel: 'loose'

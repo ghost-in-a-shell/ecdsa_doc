@@ -1,17 +1,16 @@
-# Welcome to MkDocs
+# MbedTLS ECDSA签名验签函数解析
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+开发板：野火霸天虎 STM32F407ZGT6
 
-## Commands
+物理机系统：Windows10
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+物理机架构：x86_64
 
-## Project layout
+MbedTLS版本：2.16.2
 
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+ARM MDK版本：keil5.15
+
+编译器版本：ARMClang V5.05 update 2（build 169）
+
+注：代码位置[https://github.com/ghost-in-a-shell/mbedtls-ecdsa-ARM/tree/main](https://github.com/ghost-in-a-shell/mbedtls-ecdsa-ARM/tree/main)
+
